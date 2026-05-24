@@ -1,0 +1,21 @@
+import React from 'react';
+import HeroSection from '../components/sections/HeroSection';
+import VisionSection from '../components/sections/VisionSection';
+import MissionSection from '../components/sections/MissionSection';
+import TeamSection from '../components/sections/TeamSection';
+import AboutSection from '../components/sections/AboutSection';
+
+// Adding : React.FC marks this clearly as a React Function Component
+const Home: React.FC = () => {
+  return (
+    <>
+      <HeroSection />
+      <VisionSection />
+      <MissionSection />
+      <TeamSection />
+      <AboutSection />
+    </>
+  );
+};
+
+export default Home;
