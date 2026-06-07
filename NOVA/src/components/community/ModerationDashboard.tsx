@@ -33,18 +33,27 @@ const ModerationDashboard: React.FC = () => {
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [realStats, setRealStats] = useState({ members: 0, discussions: 0 });
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       
-      const [reqsRes, repsRes] = await Promise.all([
+      const [reqsRes, repsRes, membersRes, discRes] = await Promise.all([
         supabase.from('nova_id_applications').select('*').eq('status', 'pending'),
-        supabase.from('reported_discussions_view').select('*')
+        supabase.from('reported_discussions_view').select('*'),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }),
+        supabase.from('discussions').select('id', { count: 'exact', head: true })
       ]);
         
       if (reqsRes.data) setPendingRequests(reqsRes.data as any);
       if (repsRes.data) setReportedDiscs(repsRes.data as any);
       
+      setRealStats({
+        members: membersRes.count || 0,
+        discussions: discRes.count || 0
+      });
+
       setLoading(false);
     };
     fetchData();
@@ -58,20 +67,23 @@ const ModerationDashboard: React.FC = () => {
   const approveRequest = async (appId: string, userId: string) => {
     try {
       const application = pendingRequests.find(r => r.id === appId);
-      await supabase.from('nova_id_applications').update({ status: 'approved' }).eq('id', appId);
+      const { error: err1 } = await supabase.from('nova_id_applications').update({ status: 'approved' }).eq('id', appId);
+      if (err1) throw err1;
       
       if (application) {
-        await supabase.from('profiles').update({ 
+        const { error: err2 } = await supabase.from('profiles').update({ 
           role: 'verified',
           full_name: application.full_name,
           department: application.department,
           year_of_study: application.year_of_study
         }).eq('id', userId);
+        if (err2) throw err2;
       } else {
-        await supabase.from('profiles').update({ role: 'verified' }).eq('id', userId);
+        const { error: err3 } = await supabase.from('profiles').update({ role: 'verified' }).eq('id', userId);
+        if (err3) throw err3;
       }
       
-      await supabase.from('notifications').insert({
+      const { error: err4 } = await supabase.from('notifications').insert({
         user_id: userId,
         type: 'id-approved',
         title: 'NOVA ID Approved!',
@@ -79,6 +91,7 @@ const ModerationDashboard: React.FC = () => {
         action_url: '/community',
         is_read: false
       });
+      if (err4) throw err4;
 
       setPendingRequests(prev => prev.filter(r => r.id !== appId));
       showFeedback('Application approved ✓');
@@ -90,9 +103,10 @@ const ModerationDashboard: React.FC = () => {
 
   const rejectRequest = async (appId: string, userId: string) => {
     try {
-      await supabase.from('nova_id_applications').update({ status: 'rejected' }).eq('id', appId);
+      const { error: err1 } = await supabase.from('nova_id_applications').update({ status: 'rejected' }).eq('id', appId);
+      if (err1) throw err1;
 
-      await supabase.from('notifications').insert({
+      const { error: err2 } = await supabase.from('notifications').insert({
         user_id: userId,
         type: 'event-reminder', // Reusing an existing type since we don't have a specific 'rejected' type yet
         title: 'NOVA ID Update',
@@ -100,6 +114,7 @@ const ModerationDashboard: React.FC = () => {
         action_url: '/community',
         is_read: false
       });
+      if (err2) throw err2;
 
       setPendingRequests(prev => prev.filter(r => r.id !== appId));
       showFeedback('Application rejected');
@@ -111,7 +126,8 @@ const ModerationDashboard: React.FC = () => {
 
   const deleteDiscussion = async (discId: string) => {
     try {
-      await supabase.from('discussions').delete().eq('id', discId);
+      const { error } = await supabase.from('discussions').delete().eq('id', discId);
+      if (error) throw error;
       setReportedDiscs(prev => prev.filter(d => d.discussion_id !== discId));
       showFeedback('Discussion removed ✓');
     } catch (err: any) {
@@ -122,7 +138,8 @@ const ModerationDashboard: React.FC = () => {
 
   const dismissReport = async (discId: string) => {
     try {
-      await supabase.from('discussion_reports').delete().eq('discussion_id', discId);
+      const { error } = await supabase.from('discussion_reports').delete().eq('discussion_id', discId);
+      if (error) throw error;
       setReportedDiscs(prev => prev.filter(d => d.discussion_id !== discId));
       showFeedback('Report dismissed');
     } catch (err: any) {
@@ -168,11 +185,11 @@ const ModerationDashboard: React.FC = () => {
           <span className="cm-mod-stat-label">Reports</span>
         </div>
         <div className="cm-mod-stat">
-          <span className="cm-mod-stat-value">{communityStats.members}</span>
+          <span className="cm-mod-stat-value">{realStats.members}</span>
           <span className="cm-mod-stat-label">Members</span>
         </div>
         <div className="cm-mod-stat">
-          <span className="cm-mod-stat-value">{communityStats.discussions}</span>
+          <span className="cm-mod-stat-value">{realStats.discussions}</span>
           <span className="cm-mod-stat-label">Active Disc.</span>
         </div>
       </div>

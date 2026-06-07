@@ -16,15 +16,6 @@ import type {
   MemberBadge,
 } from '../domain/models/CommunityModels';
 
-// ── Community Stats ──
-
-export const communityStats: CommunityStats = {
-  members: 1245,
-  discussions: 328,
-  eventsHosted: 52,
-  opportunitiesShared: 143,
-};
-
 // ── Discussions ──
 
 export const discussions: Discussion[] = [
