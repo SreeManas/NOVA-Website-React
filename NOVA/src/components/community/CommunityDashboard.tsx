@@ -138,6 +138,13 @@ const CommunityDashboard: React.FC<DashboardProps> = ({ onNavigate, unreadCount,
         supabase.from('opportunities').select('*', { count: 'exact', head: true }),
         supabase.from('profiles').select('full_name, points_total').order('points_total', { ascending: false }).limit(1).single()
       ]);
+      
+      // Log any errors that might be silently causing counts to be 0
+      if (membersRes.error) console.error('Error fetching members:', membersRes.error);
+      if (discRes.error) console.error('Error fetching discussions:', discRes.error);
+      if (eventsRes.error) console.error('Error fetching events:', eventsRes.error);
+      if (oppsRes.error) console.error('Error fetching opportunities:', oppsRes.error);
+
       setStats({
         members: membersRes.count || 0,
         discussions: discRes.count || 0,
