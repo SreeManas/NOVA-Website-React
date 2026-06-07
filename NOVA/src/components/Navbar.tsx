@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import AuthModal from './auth/AuthModal'
 
 const Navbar: React.FC = (): React.JSX.Element => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [navBackground, setNavBackground] = useState('linear-gradient(135deg, rgba(5, 7, 10, 0.85), rgba(11, 47, 42, 0.85), rgba(26, 27, 58, 0.85))')
+  const [isAuthOpen, setIsAuthOpen] = useState(false)
   const location = useLocation()
+  const { user, signOut } = useAuth()
 
   useEffect(() => {
     if (location.pathname !== '/') {
@@ -12,6 +16,8 @@ const Navbar: React.FC = (): React.JSX.Element => {
       if (location.pathname === '/sprints') setNavBackground('linear-gradient(135deg, rgba(2, 10, 20, 0.85), rgba(10, 58, 122, 0.85), rgba(4, 18, 38, 0.85))')
       else if (location.pathname === '/register') setNavBackground('linear-gradient(135deg, rgba(26, 4, 16, 0.85), rgba(95, 10, 58, 0.85), rgba(38, 6, 26, 0.85))')
       else if (location.pathname === '/events') setNavBackground('linear-gradient(135deg, rgba(20, 10, 2, 0.85), rgba(122, 46, 5, 0.85), rgba(42, 18, 4, 0.85))')
+      else if (location.pathname === '/launchpad') setNavBackground('linear-gradient(135deg, rgba(15, 10, 3, 0.85), rgba(100, 65, 8, 0.85), rgba(30, 18, 4, 0.85))')
+      else if (location.pathname === '/community') setNavBackground('linear-gradient(135deg, rgba(3, 15, 10, 0.85), rgba(8, 100, 65, 0.85), rgba(4, 30, 18, 0.85))')
       else setNavBackground('rgba(10, 10, 10, 0.6)')
       return
     }
@@ -99,13 +105,41 @@ const Navbar: React.FC = (): React.JSX.Element => {
           </li>
           <li>
             <Link
-              to="/register"
-              className={`register-btn ${isActiveLink('/register') ? 'active' : ''}`}
+              to="/launchpad"
+              className={isActiveLink('/launchpad') ? 'active' : ''}
               onClick={closeMenu}
             >
-              Join us
+              Launchpad
             </Link>
           </li>
+          <li>
+            <Link
+              to="/community"
+              className={isActiveLink('/community') ? 'active' : ''}
+              onClick={closeMenu}
+            >
+              Community
+            </Link>
+          </li>
+          {!user ? (
+            <li>
+              <button
+                className="register-btn"
+                onClick={() => { setIsAuthOpen(true); closeMenu(); }}
+              >
+                Login
+              </button>
+            </li>
+          ) : (
+            <li>
+              <button
+                className="register-btn"
+                onClick={() => { signOut(); closeMenu(); }}
+              >
+                Sign Out
+              </button>
+            </li>
+          )}
         </ul>
       </div>
 
@@ -114,6 +148,8 @@ const Navbar: React.FC = (): React.JSX.Element => {
         <span className="bar"></span>
         <span className="bar"></span>
       </div>
+
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </nav>
   )
 }

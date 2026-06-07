@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import * as motion from "motion/react-client"
+import { motion } from "framer-motion"
 import { Person } from "./types"
 
 interface TeamEditorialCardProps {

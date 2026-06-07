@@ -1,5 +1,5 @@
 import React from "react"
-import * as motion from "motion/react-client"
+import { motion } from "framer-motion"
 
 interface TeamLeaderCardProps {
   name: string
@@ -93,7 +93,7 @@ const leaderVariants = {
     y: 0,
     rotate: 0,
     transition: {
-      type: "spring",
+      type: "spring" as const,
       stiffness: 120,
     },
   },

@@ -1,5 +1,5 @@
 import React from "react"
-import * as motion from "motion/react-client"
+import { motion } from "framer-motion"
 import TeamEditorialCard from "./TeamEditorialCard"
 import { Portfolio } from "./types"
 
