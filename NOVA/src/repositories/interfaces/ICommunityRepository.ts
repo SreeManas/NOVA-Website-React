@@ -16,6 +16,7 @@ export interface ICommunityRepository {
   likeDiscussion(id: string): Promise<void>;
   addReply(discussionId: string, content: string): Promise<any>;
   likeReply(id: string): Promise<void>;
+  reportDiscussion(id: string, reason: string): Promise<void>;
 
   // Events
   getEvents(): Promise<CommunityEvent[]>;

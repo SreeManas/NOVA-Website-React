@@ -100,6 +100,19 @@ export class SupabaseCommunityRepository implements ICommunityRepository {
     await DiscussionService.likeReply(id, data?.likes_count || 0);
   }
 
+  async reportDiscussion(id: string, reason: string): Promise<void> {
+    const userId = await this.getUserId();
+    const { error } = await supabase
+      .from('discussion_reports')
+      .insert({ discussion_id: id, user_id: userId, reason });
+    if (error) {
+      if (error.code === '23505') {
+        throw new Error('You have already reported this discussion.');
+      }
+      throw error;
+    }
+  }
+
   // --- Events ---
   async getEvents(): Promise<CommunityEvent[]> {
     const supabaseEvents = await EventService.getEvents();

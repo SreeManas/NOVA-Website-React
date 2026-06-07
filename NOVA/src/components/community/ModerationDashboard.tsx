@@ -5,10 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../services/supabase/supabaseClient';
-import {
-  reportedDiscussions,
-  communityStats,
-} from '../../configs/communityConfig';
+import { communityStats } from '../../configs/communityConfig';
 
 interface NovaIdRequest {
   id: string;
@@ -22,26 +19,35 @@ interface NovaIdRequest {
   applied_at: string;
 }
 
+interface ReportedDiscussion {
+  discussion_id: string;
+  title: string;
+  author_name: string;
+  report_count: number;
+  reason: string;
+}
+
 const ModerationDashboard: React.FC = () => {
   const [pendingRequests, setPendingRequests] = useState<NovaIdRequest[]>([]);
-  const [reportedDiscs, setReportedDiscs] = useState(reportedDiscussions);
+  const [reportedDiscs, setReportedDiscs] = useState<ReportedDiscussion[]>([]);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRequests = async () => {
+    const fetchData = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('nova_id_applications')
-        .select('*')
-        .eq('status', 'pending');
+      
+      const [reqsRes, repsRes] = await Promise.all([
+        supabase.from('nova_id_applications').select('*').eq('status', 'pending'),
+        supabase.from('reported_discussions_view').select('*')
+      ]);
         
-      if (data) {
-        setPendingRequests(data as any);
-      }
+      if (reqsRes.data) setPendingRequests(reqsRes.data as any);
+      if (repsRes.data) setReportedDiscs(repsRes.data as any);
+      
       setLoading(false);
     };
-    fetchRequests();
+    fetchData();
   }, []);
 
   const showFeedback = (msg: string) => {
@@ -103,14 +109,26 @@ const ModerationDashboard: React.FC = () => {
     }
   };
 
-  const deleteDiscussion = (discId: string) => {
-    setReportedDiscs(prev => prev.filter(d => d.discussionId !== discId));
-    showFeedback('Discussion removed ✓');
+  const deleteDiscussion = async (discId: string) => {
+    try {
+      await supabase.from('discussions').delete().eq('id', discId);
+      setReportedDiscs(prev => prev.filter(d => d.discussion_id !== discId));
+      showFeedback('Discussion removed ✓');
+    } catch (err: any) {
+      console.error(err);
+      showFeedback('Failed to remove discussion.');
+    }
   };
 
-  const dismissReport = (discId: string) => {
-    setReportedDiscs(prev => prev.filter(d => d.discussionId !== discId));
-    showFeedback('Report dismissed');
+  const dismissReport = async (discId: string) => {
+    try {
+      await supabase.from('discussion_reports').delete().eq('discussion_id', discId);
+      setReportedDiscs(prev => prev.filter(d => d.discussion_id !== discId));
+      showFeedback('Report dismissed');
+    } catch (err: any) {
+      console.error(err);
+      showFeedback('Failed to dismiss report.');
+    }
   };
 
   const formatTimeAgo = (dateStr: string): string => {
@@ -246,7 +264,7 @@ const ModerationDashboard: React.FC = () => {
           <div className="cm-mod-cards">
             {reportedDiscs.map((report, idx) => (
               <motion.div
-                key={report.discussionId}
+                key={report.discussion_id}
                 className="cm-mod-card cm-mod-card-report"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -258,10 +276,10 @@ const ModerationDashboard: React.FC = () => {
                   </div>
                   <div>
                     <h5>{report.title}</h5>
-                    <span className="cm-mod-card-sub">by {report.authorName}</span>
+                    <span className="cm-mod-card-sub">by {report.author_name}</span>
                   </div>
                   <span className="cm-report-count">
-                    <i className="fas fa-exclamation-triangle" /> {report.reportCount} reports
+                    <i className="fas fa-exclamation-triangle" /> {report.report_count} reports
                   </span>
                 </div>
                 <p className="cm-mod-card-reason">
@@ -270,13 +288,13 @@ const ModerationDashboard: React.FC = () => {
                 <div className="cm-mod-card-actions">
                   <button
                     className="cm-mod-review"
-                    onClick={() => dismissReport(report.discussionId)}
+                    onClick={() => dismissReport(report.discussion_id)}
                   >
                     <i className="fas fa-eye" /> Dismiss
                   </button>
                   <button
                     className="cm-mod-delete"
-                    onClick={() => deleteDiscussion(report.discussionId)}
+                    onClick={() => deleteDiscussion(report.discussion_id)}
                   >
                     <i className="fas fa-trash" /> Remove
                   </button>

@@ -22,6 +22,7 @@ interface DiscussionsProps {
   likeDiscussion: (id: string) => void;
   addReply: (discussionId: string, content: string) => Promise<void>;
   likeReply: (id: string) => Promise<void>;
+  reportDiscussion: (id: string, reason: string) => Promise<void>;
 }
 
 // Cross-module: roadmap suggestions based on discussion category
@@ -45,8 +46,11 @@ const DiscussionsForum: React.FC<DiscussionsProps> = ({
   likeDiscussion,
   addReply,
   likeReply,
+  reportDiscussion,
 }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState<DiscussionCategory>('general');
   const [newContent, setNewContent] = useState('');
@@ -91,6 +95,18 @@ const DiscussionsForum: React.FC<DiscussionsProps> = ({
       alert('Failed to post reply.');
     } finally {
       setSubmittingReply(false);
+    }
+  };
+
+  const submitReport = async () => {
+    if (!selectedDiscussion || !reportReason.trim()) return;
+    try {
+      await reportDiscussion(selectedDiscussion.id, reportReason);
+      alert('Discussion reported successfully. Moderators will review it.');
+      setShowReportModal(false);
+      setReportReason('');
+    } catch (err: any) {
+      alert(err.message || 'Failed to report discussion.');
     }
   };
 
@@ -200,6 +216,9 @@ const DiscussionsForum: React.FC<DiscussionsProps> = ({
             </button>
             <button className="cm-disc-action-btn" onClick={handleShare}>
               <i className="fas fa-share-alt" /> Share
+            </button>
+            <button className="cm-disc-action-btn cm-disc-report-btn" onClick={() => setShowReportModal(true)} style={{ color: '#ef4444' }}>
+              <i className="fas fa-flag" /> Report
             </button>
           </div>
         </div>
@@ -514,6 +533,45 @@ const DiscussionsForum: React.FC<DiscussionsProps> = ({
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Report Modal */}
+      <AnimatePresence>
+        {showReportModal && (
+          <div className="cm-modal-overlay">
+            <motion.div
+              className="cm-modal-content"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <div className="cm-modal-header">
+                <h2>Report Discussion</h2>
+                <button className="cm-close-btn" onClick={() => setShowReportModal(false)}><i className="fas fa-times" /></button>
+              </div>
+              <div className="cm-modal-body">
+                <p style={{ color: '#9ca3af', marginBottom: '1rem', fontSize: '0.95rem' }}>
+                  Please provide a reason for reporting this discussion. This will be reviewed by the core moderation team.
+                </p>
+                <div className="cm-form-group">
+                  <label>Reason</label>
+                  <textarea
+                    placeholder="e.g., Spam, Harassment, Off-topic..."
+                    rows={4}
+                    value={reportReason}
+                    onChange={e => setReportReason(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="cm-modal-footer">
+                <button className="cm-cancel-btn" onClick={() => setShowReportModal(false)}>Cancel</button>
+                <button className="cm-submit-btn" onClick={submitReport} disabled={!reportReason.trim()} style={{ background: '#ef4444', color: 'white', border: 'none' }}>
+                  Submit Report
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

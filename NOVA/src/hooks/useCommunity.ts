@@ -167,6 +167,15 @@ export function useCommunity() {
     }
   };
 
+  const reportDiscussion = async (id: string, reason: string) => {
+    try {
+      await communityService.reportDiscussion(id, reason);
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+
   // --- Events ---
   const joinEvent = async (id: string) => {
     setIsInteractingWithEvent(prev => ({ ...prev, [id]: true }));
@@ -267,6 +276,7 @@ export function useCommunity() {
     likeDiscussion,
     addReply,
     likeReply,
+    reportDiscussion,
     
     // Events
     joinedEvents: eventInteractionState.joined,

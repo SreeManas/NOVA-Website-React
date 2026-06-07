@@ -70,6 +70,19 @@ export class MockCommunityRepository implements ICommunityRepository {
     this.setStorage('nova-discussions', updated);
   }
 
+  async addReply(_discussionId: string, _content: string): Promise<any> {
+    await simulateDelay(200);
+    return {};
+  }
+
+  async likeReply(_id: string): Promise<void> {
+    await simulateDelay(100);
+  }
+
+  async reportDiscussion(_id: string, _reason: string): Promise<void> {
+    await simulateDelay(200);
+  }
+
   // --- Events ---
   async getEvents(): Promise<CommunityEvent[]> {
     await simulateDelay(300);

@@ -102,6 +102,7 @@ const Community: React.FC = (): React.JSX.Element => {
             likeDiscussion={state.likeDiscussion}
             addReply={state.addReply}
             likeReply={state.likeReply}
+            reportDiscussion={state.reportDiscussion}
           />
         );
       case 'events':

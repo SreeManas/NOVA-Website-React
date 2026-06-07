@@ -43,6 +43,11 @@ export class CommunityService {
     await this.repository.likeReply(id);
   }
 
+  async reportDiscussion(id: string, reason: string): Promise<void> {
+    if (!reason.trim()) throw new Error('Report reason is required.');
+    await this.repository.reportDiscussion(id, reason);
+  }
+
   // --- Events ---
   async fetchEvents(): Promise<CommunityEvent[]> {
     return await this.repository.getEvents();
